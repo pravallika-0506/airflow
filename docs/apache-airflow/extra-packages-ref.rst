@@ -228,9 +228,10 @@ These are extras that add dependencies needed for integration with external serv
 +---------------------+-----------------------------------------------------+-----------------------------------------------------+
 | yandex              | ``pip install 'apache-airflow[yandex]'``            | Yandex.cloud hooks and operators                    |
 +---------------------+-----------------------------------------------------+-----------------------------------------------------+
+| yeedu               | ``pip install 'apache-airflow[yeedu]'``             | Yeedu hook and operators                                     |
++---------------------+-----------------------------------------------------+-----------------------------------------------------+
 | zendesk             | ``pip install 'apache-airflow[zendesk]'``           | Zendesk hooks                                       |
 +---------------------+-----------------------------------------------------+-----------------------------------------------------+
-
 
 Locally installed software extras
 =================================

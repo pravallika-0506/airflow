@@ -1779,6 +1779,7 @@ Yandex
 yandex
 yandexcloud
 yarnpkg
+yeedu
 Yieldr
 yml
 youtrack

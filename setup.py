@@ -732,6 +732,7 @@ ALL_DB_PROVIDERS = [
     "presto",
     "trino",
     "vertica",
+    "yeedu",
 ]
 
 
