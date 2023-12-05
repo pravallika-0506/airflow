@@ -16,73 +16,61 @@
 # under the License.
 
 from __future__ import annotations
-
-import unittest
 from unittest.mock import MagicMock, patch
-
+import pytest
 from airflow.exceptions import AirflowException
 from airflow.providers.yeedu.operators.yeedu import YeeduJobRunOperator
 
+@pytest.fixture
+def mock_api_request():
+    with patch("providers.yeedu.hooks.yeedu.YeeduHook._api_request") as mock:
+        yield mock
 
-class TestYeeduJobRunOperator(unittest.TestCase):
-    @patch("providers.yeedu.hooks.yeedu.YeeduHook._api_request")
-    @patch("airflow.models.Variable.get")
-    def test_execute_successful_job(self, mock_variable_get, mock_requests):
-        job_conf_id = "123"
-        hostname = "test_host"
-        workspace_id = 456
-        token = "test_token"
+@pytest.fixture
+def mock_variable_get():
+    with patch("airflow.models.Variable.get") as mock:
+        yield mock
 
-        mock_variable_get.return_value = token
+def test_execute_successful_job(mock_variable_get, mock_api_request):
+    job_conf_id = "123"
+    hostname = "test_host"
+    workspace_id = 456
+    token = "test_token"
 
-        operator = YeeduJobRunOperator(
-            task_id="test_task",
-            job_conf_id=job_conf_id,
-            hostname=hostname,
-            workspace_id=workspace_id,
-            token=None,
-        )
+    mock_variable_get.return_value = token
 
-        # Mocking requests.request
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"job_id": 789, "job_status": "DONE"}
-        mock_response.text = "Job completed successfully"
-        mock_requests.return_value = mock_response
+    operator = YeeduJobRunOperator(
+        task_id="test_task", job_conf_id=job_conf_id, hostname=hostname, workspace_id=workspace_id, token=None
+    )
 
-        result = operator.execute({})
-        self.assertEqual(result, "Job completed successfully")
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"job_id": 789, "job_status": "DONE"}
+    mock_response.text = "Job completed successfully"
+    mock_api_request.return_value = mock_response
 
-    @patch("providers.yeedu.hooks.yeedu.YeeduHook._api_request")
-    @patch("airflow.models.Variable.get")
-    def test_execute_fail_job(self, mock_variable_get, mock_requests):
-        job_conf_id = "123"
-        hostname = "test_host"
-        workspace_id = 456
-        token = "test_token"
+    result = operator.execute({})
+    assert result == "Job completed successfully"
 
-        mock_variable_get.return_value = token
+def test_execute_fail_job(mock_variable_get, mock_api_request):
+    job_conf_id = "123"
+    hostname = "test_host"
+    workspace_id = 456
+    token = "test_token"
 
-        operator = YeeduJobRunOperator(
-            task_id="test_task",
-            job_conf_id=job_conf_id,
-            hostname=hostname,
-            workspace_id=workspace_id,
-            token=None,
-        )
+    mock_variable_get.return_value = token
 
-        # Mocking requests.request
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"job_id": 789, "job_status": "ERROR"}
-        mock_response.text = "syntax_error"
-        mock_requests.return_value = mock_response
+    operator = YeeduJobRunOperator(
+        task_id="test_task", job_conf_id=job_conf_id, hostname=hostname, workspace_id=workspace_id, token=None
+    )
 
-        with self.assertRaises(AirflowException) as context:
-            operator.execute({})
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"job_id": 789, "job_status": "ERROR"}
+    mock_response.text = "syntax_error"
+    mock_api_request.return_value = mock_response
 
-        self.assertEqual(str(context.exception), "syntax_error")
+    with pytest.raises(AirflowException) as context:
+        operator.execute({})
 
-
-if __name__ == "__main__":
-    unittest.main()
+    assert str(context.value) == "syntax_error"
